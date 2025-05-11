@@ -2,9 +2,8 @@ name: svf-example
 
 on:
   push:
-  pull_request:
-  repository_dispatch:
-    types: [new-commit-from-SVF]
+    branches:
+      - master
 
 jobs:
   build:
@@ -38,14 +37,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install cmake gcc g++ nodejs doxygen graphviz
           
-      # install llvm and svf
-      - name: env-setup
-        run: |
-          npm install svf-lib
           
       # build current repo
-      - name: build-svf-example
+      - name: env-setup
         run: |
-         source $GITHUB_WORKSPACE/env.sh
-         cmake .
-         make 
+          git clone https://github.com/Johanmyst/SVF -b build-fixes
+          cd SVF 
+          source build.sh
+          echo "SVF_DIR=$SVF_DIR" >> $GITHUB_ENV
+          echo "LLVM_DIR=$LLVM_DIR" >> $GITHUB_ENV
+          echo "Z3_DIR=$Z3_DIR" >> $GITHUB_ENV
+
+      - name: build and ctest
+        run: |
+          echo "SVF_DIR="$SVF_DIR
+          echo "LLVM_DIR="$LLVM_DIR
+          echo "Z3_DIR="$Z3_DIR
+          cmake .
+          make
+          ctest -V
