@@ -10,7 +10,7 @@ SVF relies on the following libraries & tools:
 - LLVM (<=16.0.6)
 - Z3 (>=4.8.8)
 
-## Scenario 1: Build from Scratch
+## Option 1: Build from Scratch
 
 In this scenario, we build SVF from source and use it directly from the build directory.
 
@@ -44,7 +44,7 @@ cmake -B build -S ./ -DSVF_DIR=/path/to/SVF -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
 
-## Scenario 2: Install and Use
+## Option 2: Install and Use
 
 In this scenario, we install SVF to a specific directory and use it from there.
 
@@ -76,7 +76,7 @@ cmake -B build -S ./ -DSVF_DIR=/path/to/install/dir
 cmake --build build
 ```
 
-## Scenario 3: NPM Installation
+## Option 3: NPM Installation
 
 In this scenario, we use SVF installed through npm.
 
