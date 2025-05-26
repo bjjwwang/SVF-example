@@ -54,11 +54,18 @@ In this scenario, we install SVF to a specific directory and use it from there.
 # Clone SVF
 git clone https://github.com/SVF-tools/SVF.git
 cd SVF
+```
 
-# Build and install SVF
-cmake -S ./ -B Release-build --install-prefix="/path/to/install/dir"
-cmake --build Release-build
-cmake --install Release-build
+If you build in Release mode, run
+```
+bash build.sh
+cmake --install ./Release-build --prefix /path/to/install/dir
+```
+
+If you build in Debug mode, run
+```
+bash build.sh debug
+cmake --install ./Debug-build --prefix /path/to/install/dir
 ```
 
 ### Step 2: Build SVF-example
