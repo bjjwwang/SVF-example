@@ -1,16 +1,8 @@
 # Using SVF as a Library
 
-This repository shows how to build, install, and use SVF as a library in a project to analyse some
-LLVM bitcode files. For more information on setting up SVF, see
-[the wiki](https://github.com/svf-tools/SVF/wiki/Setup-Guide#getting-started).
+This repository demonstrates how to use SVF as a library in your project to analyze LLVM bitcode files. We provide examples for three different scenarios of using SVF.
 
-## Building & Installing SVF
-
-This repository builds & installs SVF using its primary build system: CMake. To use SVF with a different
-build system, ensure its library files (i.e., `libSvfCore.[a|so]` & `libSvfLLVM.[a|so]`) are properly
-defined and available, as well as SVF's header files.
-
-### Prerequisites & Dependencies
+## Prerequisites & Dependencies
 
 SVF relies on the following libraries & tools:
 
@@ -18,89 +10,128 @@ SVF relies on the following libraries & tools:
 - LLVM (<=16.0.6)
 - Z3 (>=4.8.8)
 
-If you've installed SVF's dependencies from the official repositories (e.g., `apt`), SVF's build system
-should find them out of the box. If you've manually built & installed the dependencies (particularly
-to non-standard installation locations), ensure they are accessible (i.e., by setting the environment
-variables `$PATH` and `$LD_LIBRARY_PATH`).
+## Scenario 1: Build from Scratch
 
-To use a specific LLVM/Z3 instance, define their installation roots in `$LLVM_DIR` and `$Z3_DIR`, or
-`$LLVM_HOME` and `$Z3_HOME`.
+In this scenario, we build SVF from source and use it directly from the build directory.
 
-### Configuring, Building, and Installing SVF
-
-The SVF CMake build system supports multiple build flags; see the top-level `CMakeLists.txt` for more
-information about the supported build flags.
-
-To clone SVF to the user's home direction and create a good default configuration to install SVF to the
-user's local installation tree, use the following as an example:
+### Step 1: Build SVF
 
 ```shell
-# Can be set globally/persistently (e.g., in ~/.bashrc)
-SVF_DIR=${SVF_DIR:-$HOME/SVF}
-
 # Clone SVF
-cd $SVF_DIR
-git clone https://github.com/SVF-tools/SVF.git ./
+git clone https://github.com/SVF-tools/SVF.git
+cd SVF
 
-# Configure, build, and then install SVF to $SVF_DIR (--verbose outputs during build/install)
-cmake -G "Ninja" -S ./ -B Release-build --install-prefix="$(realpath $SVF_DIR)"
-cmake --build Release-build --verbose
-cmake --install Release-build --verbose
+# Build SVF in Release mode
+cmake -S ./ -B Release-build
+cmake --build Release-build
+
+# Or build SVF in Debug mode
+cmake -S ./ -B Debug-build -DCMAKE_BUILD_TYPE=Debug
+cmake --build Debug-build
 ```
+
+### Step 2: Build SVF-example
+
+```shell
+# For Release build
+cd SVF-example
+cmake -B build -S ./ -DSVF_DIR=/path/to/SVF 
+cmake --build build
+
+# For Debug build
+cd SVF-example
+cmake -B build -S ./ -DSVF_DIR=/path/to/SVF -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+```
+
+## Scenario 2: Install and Use
+
+In this scenario, we install SVF to a specific directory and use it from there.
+
+### Step 1: Build and Install SVF
+
+```shell
+# Clone SVF
+git clone https://github.com/SVF-tools/SVF.git
+cd SVF
+```
+
+If you build in Release mode, run
+```
+bash build.sh
+cmake --install ./Release-build --prefix /path/to/install/dir
+```
+
+If you build in Debug mode, run
+```
+bash build.sh debug
+cmake --install ./Debug-build --prefix /path/to/install/dir
+```
+
+### Step 2: Build SVF-example
+
+```shell
+cd SVF-example
+cmake -B build -S ./ -DSVF_DIR=/path/to/install/dir
+cmake --build build
+```
+
+## Scenario 3: NPM Installation
+
+In this scenario, we use SVF installed through npm.
+
+### Step 1: Install SVF via npm
+
+```shell
+npm install svf-lib
+```
+
+### Step 2: Build SVF-example
+
+```shell
+cd SVF-example
+# Get npm root directory
+NPM_ROOT=$(npm root)
+# Set SVF_DIR to the SVF installation in npm
+export SVF_DIR="$NPM_ROOT/SVF"
+cmake -B build -S ./
+cmake --build build
+```
+
+## Using the Example
+
+After building in any of the above scenarios, you can run the example:
+
+```shell
+./build/svf-example ./data/example.ll
+```
+
+## Troubleshooting
 
 ### CMake Package Finding
 
-CMake uses `$<PACKAGE>_DIR` variables to locate packages by default; as `$SVF_DIR` is set to the
-installation prefix, it should be able to locate SVF's CMake package. If you installed to a
-non-standard installation prefix (different from `$SVF_DIR`), ensure CMake can locate the
-package by adding the installation prefix to `$CMAKE_PREFIX_PATH`. On most platforms,
-this can be done in one of the following ways:
+If CMake cannot find SVF, ensure the installation directory is in your `CMAKE_PREFIX_PATH`:
 
 ```shell
-# For Bash/Zsh shells (add to config (e.g., ~/.profile, ~/.bashrc,
-# ~/.zshrc, ~/.zshenv, etc.) to make this setting persistent:
-export CMAKE_PREFIX_PATH="$SVF_DIR:$CMAKE_PREFIX_PATH"
-
-# To avoid the trailing ':' if $CMAKE_PREFIX_PATH is unset, use:
+# For Bash/Zsh
 export CMAKE_PREFIX_PATH="$SVF_DIR${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
 
-# For Fish shell (add -U to make this persistent; use -a to append instead):
+# For Fish
 set -px --path CMAKE_LIBRARY_PATH $SVF_DIR
 ```
 
-### Without Using the CMake Package
+### Library Path Issues
 
-To make SVF's tools available on the command line, or to use SVF from another build system, ensure its
-headers and library files are globally locatable. If you installed SVF to one of the default install
-prefixes (e.g., `/usr`, `/usr/local`, etc.), this should already be the case. If you installed SVF
-to a non-standard location, ensure the appropriate paths are added to their respective variables:
+If you encounter library loading issues, ensure the library path is set correctly:
 
 ```shell
-# Ensure SVF is available; use earlier notation to avoid trailing ':'; flip to append instead
+# For Bash/Zsh
 export LD_LIBRARY_PATH="$SVF_DIR/lib:$LD_LIBRARY_PATH"
-export PATH="$SVF_DIR/bin:$PATH"
 
-# Or, for Fish (use -U to make persistent; use -a to append instead):
+# For Fish
 set -Upx LD_LIBRARY_PATH $SVF_DIR/lib
-fish_add_path --prepend $SVF_DIR/bin
 ```
 
-## Building the Executable Example
+## Additional Information
 
-The top-level `CMakeLists.txt` in this directory shows how to locate & link against SVF's CMake package.
-To configure, build, and install the examples locally (to this directory), run the following:
-
-```shell
-rm -rf build bin lib data
-cmake -G "Ninja" -B build -S ./ --install-prefix=$(pwd)
-cmake --build build --verbose
-cmake --install build --verbose
-```
-
-## Using the Executable Example
-
-The example executable can now be used like this:
-
-```shell
-./bin/svf-example ./data/example.ll
-```
+For more detailed information about SVF setup and configuration, please refer to [the SVF wiki](https://github.com/svf-tools/SVF/wiki/Setup-Guide#getting-started).
